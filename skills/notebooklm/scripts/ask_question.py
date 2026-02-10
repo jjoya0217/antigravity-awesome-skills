@@ -20,6 +20,13 @@ from patchright.sync_api import sync_playwright
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
+# Force UTF-8 output on Windows to handle emojis
+if sys.platform == 'win32':
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
+
 from auth_manager import AuthManager
 from notebook_manager import NotebookLibrary
 from config import QUERY_INPUT_SELECTORS, RESPONSE_SELECTORS
