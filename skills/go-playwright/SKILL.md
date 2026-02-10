@@ -1,6 +1,8 @@
 ---
-name: playwright-go-automation
+name: go-playwright
 description: Expert capability for robust, stealthy, and efficient browser automation using Playwright Go.
+risk: safe
+source: https://github.com/playwright-community/playwright-go
 ---
 
 # Playwright Go Automation Expert
@@ -13,6 +15,19 @@ This skill provides a comprehensive framework for writing high-performance, prod
 - Use when the target site has complex dynamic content (SPA, React, Vue) requiring a real browser.
 - Use when the user mentions "stealth," "avoiding detection," "cloudflare," or "human-like" behavior.
 - Use when debugging existing Playwright scripts.
+
+## Safety & Risk
+**Risk Level: 🔵 Safe**
+
+- **Sandboxed Execution:** Browser contexts are isolated; they do not persist data to the host machine unless explicitly saved.
+- **Resource Management:** Designed to close browsers and contexts via `defer` to prevent memory leaks.
+- **No External State-Change:** Default behavior is read-only (scraping/testing) unless the script is explicitly designed to submit forms or modify data.
+
+## Limitations
+- **Environment Dependencies:** Requires Playwright drivers and browsers to be installed (`go run github.com/playwright-community/playwright-go/cmd/playwright@latest install --with-deps`).
+- **Resource Intensity:** Launching full browser instances (even headless) consumes significant RAM/CPU. Use single-browser/multi-context architecture.
+- **Bot Detection:** While this skill includes stealth techniques, extremely strict anti-bot systems (e.g., rigorous Cloudflare settings) may still detect automation.
+- **CAPTCHAs:** Does not include built-in CAPTCHA solving capabilities.
 
 ## Strategic Implementation Guidelines
 
@@ -50,112 +65,12 @@ To bypass anti-bot systems (Cloudflare, Akamai), the generated code must **imita
   - You need to implement complex network interception or authentication flows.
   - The API has changed significantly.
 
-## Code Examples
+## Resources
+- `resources/implementation-playbook.md` for detailed code examples and implementation patterns.
 
-### Standard Initialization (Headless + Zap)
-```go
-package main
-
-import (
-    "[github.com/playwright-community/playwright-go](https://github.com/playwright-community/playwright-go)"
-    "go.uber.org/zap"
-    "log"
-)
-
-func main() {
-    // 1. Setup Logger
-    logger, _ := zap.NewDevelopment()
-    defer logger.Sync()
-
-    // 2. Start Playwright Driver
-    pw, err := playwright.Run()
-    if err != nil {
-        logger.Fatal("could not start playwright", zap.Error(err))
-    }
-    
-    // 3. Launch Browser (Singleton)
-    // Use Headless: false and SlowMo for Debugging
-    browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
-        Headless: playwright.Bool(false), 
-        SlowMo:   playwright.Float(100), // Slow actions by 100ms for visibility
-    })
-    if err != nil {
-        logger.Fatal("could not launch browser", zap.Error(err))
-    }
-    defer browser.Close() // Graceful cleanup
-
-    // 4. Create Isolated Context (Session)
-    context, err := browser.NewContext(playwright.BrowserNewContextOptions{
-        UserAgent: playwright.String("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)..."),
-        Viewport: &playwright.Size{Width: 1920, Height: 1080},
-    })
-    if err != nil {
-        logger.Fatal("could not create context", zap.Error(err))
-    }
-    defer context.Close()
-
-    // 5. Open Page
-    page, _ := context.NewPage()
-    
-    // ... Implementation ...
-}
-```
-
-### Human-Like Typing & Interaction
-```go
-import (
-    "math/rand"
-    "time"
-)
-
-// HumanType simulates a user typing with variable speed
-func HumanType(locator playwright.Locator, text string) {
-    // Focus the element first (like a human)
-    locator.Click()
-    
-    for _, char := range text {
-        // Random delay: 50ms to 150ms
-        delay := time.Duration(rand.Intn(100) + 50) * time.Millisecond
-        time.Sleep(delay)
-        locator.Press(string(char))
-    }
-}
-
-// HumanClick adds offset and hesitation
-func HumanClick(page playwright.Page, selector string) {
-    box, _ := page.Locator(selector).BoundingBox()
-    if box == nil {
-        return
-    }
-    
-    // Calculate center with random offset (jitter)
-    x := box.X + box.Width/2 + (rand.Float64()*10 - 5)
-    y := box.Y + box.Height/2 + (rand.Float64()*10 - 5)
-    
-    // Move mouse smoothly (requires custom Bezier implementation or steps)
-    page.Mouse().Move(x, y, playwright.MouseMoveOptions{Steps: playwright.Int(10)})
-    time.Sleep(100 * time.Millisecond) // Hesitate
-    page.Mouse().Click(x, y)
-}
-```
-
-#Session Management (Save/Load Cookies)
-
-```go
-func SaveSession(context playwright.BrowserContext, filepath string) {
-    cookies, _ := context.Cookies()
-    // Serialize cookies to JSON and write to 'filepath'
-}
-
-func LoadSession(context playwright.BrowserContext, filepath string) {
-    // Read JSON from 'filepath' and deserialize
-    // var cookies []playwright.Cookie
-    context.AddCookies(cookies)
-}
-```
 
 ### Summary Checklist for Agent
- - Is Debug Mode on? -> Headless=false, SlowMo=100+.
- - Is it a new user identity? -> Create NewContext, apply new Proxy, rotate User-Agent.
- - Is the action critical? -> Wrap in SafeAction with zap logging.
- - Is the target guarded (Cloudflare/Akamai)? -> Enable HumanType, BezierMouse, and Stealth Scripts.
+ - Is Debug Mode on? -> `Headless=false`, `SlowMo=100+`.
+ - Is it a new user identity? -> `NewContext`, apply new Proxy, rotate `User-Agent`.
+ - Is the action critical? -> Wrap in `SafeAction` with Zap logging.
+ - Is the target guarded (Cloudflare/Akamai)? -> Enable `HumanType`, `BezierMouse`, and Stealth Scripts.
