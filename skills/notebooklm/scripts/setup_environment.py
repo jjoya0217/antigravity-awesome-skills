@@ -10,6 +10,13 @@ import subprocess
 import venv
 from pathlib import Path
 
+# Force UTF-8 output on Windows to handle emojis
+if sys.platform == 'win32':
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
+
 
 class SkillEnvironment:
     """Manages skill-specific virtual environment"""
@@ -52,15 +59,15 @@ class SkillEnvironment:
             try:
                 # Upgrade pip first
                 subprocess.run(
-                    [str(self.venv_pip), "install", "--upgrade", "pip"],
-                    check=True,
+                    [str(self.venv_python), "-m", "pip", "install", "--upgrade", "pip"],
+                    check=False,  # Allow upgrade failure
                     capture_output=True,
                     text=True
                 )
 
                 # Install requirements
                 result = subprocess.run(
-                    [str(self.venv_pip), "install", "-r", str(self.requirements_file)],
+                    [str(self.venv_python), "-m", "pip", "install", "-r", str(self.requirements_file)],
                     check=True,
                     capture_output=True,
                     text=True
