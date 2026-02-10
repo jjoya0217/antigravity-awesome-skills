@@ -12,6 +12,14 @@ import os
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from datetime import datetime
+import sys
+
+# Force UTF-8 output on Windows to handle emojis
+if sys.platform == 'win32':
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
 
 
 class NotebookLibrary:
